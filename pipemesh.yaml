@@ -1,7 +1,8 @@
 # demo-actions — a dogfooding repo for DESIGN-V42 (2026-09-05): jobs whose
 # executor is a GitHub Actions workflow. The mainline is release-flow
-# shaped: `build` is a workflow_dispatch run of build.yml whose `dist`
-# artifact PipeMesh imports; `verify` runs on PipeMesh's hosted compute
+# shaped: `build` is a trigger whose target is the build.yml Actions
+# workflow (trigger: github_actions:) and whose `dist` artifact PipeMesh
+# imports; `verify` runs on PipeMesh's hosted compute
 # and reads that artifact (inherited through needs:); the two deploys
 # are runs of deploy.yml. Every workflow checks out the revision
 # PipeMesh hands it (pipemesh_sha) and names its run after pipemesh_run
@@ -18,8 +19,8 @@ pipelines:
       build:
         stage: build
         timeout_seconds: 900
-        github_actions:
-          workflow: build.yml
+        trigger:
+          github_actions: build.yml
           artifacts: [dist]
 
       # Hosted compute reading what Actions built: dist/ arrives at the
@@ -37,8 +38,8 @@ pipelines:
         stage: staging
         needs: [verify]
         timeout_seconds: 900
-        github_actions:
-          workflow: deploy.yml
+        trigger:
+          github_actions: deploy.yml
           inputs:
             environment: staging
 
@@ -46,7 +47,7 @@ pipelines:
         stage: production
         needs: [deploy_staging]
         timeout_seconds: 900
-        github_actions:
-          workflow: deploy.yml
+        trigger:
+          github_actions: deploy.yml
           inputs:
             environment: production
