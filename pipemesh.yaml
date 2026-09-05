@@ -1,10 +1,11 @@
 # demo-actions — a dogfooding repo for DESIGN-V42 (2026-09-05): jobs whose
 # executor is a GitHub Actions workflow. The mainline is release-flow
-# shaped; `build` runs on PipeMesh's hosted compute, the two deploys are
-# workflow_dispatch runs of .github/workflows/deploy.yml, orchestrated
-# and promoted by PipeMesh. The workflow checks out the revision PipeMesh
-# hands it (pipemesh_sha) and names its run after pipemesh_run so the
-# runner can match it exactly.
+# shaped: `build` is a workflow_dispatch run of build.yml whose `dist`
+# artifact PipeMesh imports; `verify` runs on PipeMesh's hosted compute
+# and reads that artifact (inherited through needs:); the two deploys
+# are runs of deploy.yml. Every workflow checks out the revision
+# PipeMesh hands it (pipemesh_sha) and names its run after pipemesh_run
+# so the runner can match it exactly.
 #
 # demo-* repos exercise engine features end-to-end on the production
 # instance without touching the pipemesh/pipemesh mainline.
@@ -16,13 +17,25 @@ pipelines:
     jobs:
       build:
         stage: build
+        timeout_seconds: 900
+        github_actions:
+          workflow: build.yml
+          artifacts: [dist]
+
+      # Hosted compute reading what Actions built: dist/ arrives at the
+      # workspace root through the ordinary inherited-artifact path.
+      verify:
+        stage: build
+        needs: [build]
         script: |
-          echo "building $(cat app/VERSION) at $CI_COMMIT_SHA"
-          sh app/build.sh
+          echo "built version $(cat dist/version.txt) at $(cat dist/revision.txt)"
+          test "$(cat dist/revision.txt)" = "$CI_COMMIT_SHA"
+          test -x dist/deploy.sh || chmod +x dist/deploy.sh
+          echo "artifact from GitHub Actions verified"
 
       deploy_staging:
         stage: staging
-        needs: [build]
+        needs: [verify]
         timeout_seconds: 900
         github_actions:
           workflow: deploy.yml

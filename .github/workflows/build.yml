@@ -1,0 +1,37 @@
+# Dispatched by PipeMesh (DESIGN-V42): the build runs on GitHub Actions
+# and hands its output back as a named artifact, which PipeMesh imports
+# so downstream jobs inherit it through needs:.
+name: Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      pipemesh_sha:
+        description: Revision to build (set by PipeMesh)
+        type: string
+        required: true
+      pipemesh_run:
+        description: PipeMesh job run id (set by PipeMesh)
+        type: string
+        required: true
+
+run-name: build · ${{ inputs.pipemesh_run }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.pipemesh_sha }}
+      - name: Build
+        run: |
+          sh app/build.sh
+          mkdir -p dist
+          printf '%s\n' "$(cat app/VERSION)" > dist/version.txt
+          printf '%s\n' "${{ inputs.pipemesh_sha }}" > dist/revision.txt
+          cp app/deploy.sh dist/deploy.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
