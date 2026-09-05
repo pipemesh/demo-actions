@@ -1,0 +1,39 @@
+# demo-actions — a dogfooding repo for DESIGN-V42 (2026-09-05): jobs whose
+# executor is a GitHub Actions workflow. The mainline is release-flow
+# shaped; `build` runs on PipeMesh's hosted compute, the two deploys are
+# workflow_dispatch runs of .github/workflows/deploy.yml, orchestrated
+# and promoted by PipeMesh. The workflow checks out the revision PipeMesh
+# hands it (pipemesh_sha) and names its run after pipemesh_run so the
+# runner can match it exactly.
+#
+# demo-* repos exercise engine features end-to-end on the production
+# instance without touching the pipemesh/pipemesh mainline.
+
+pipelines:
+  deployment:
+    stages: [build, staging, production]
+
+    jobs:
+      build:
+        stage: build
+        script: |
+          echo "building $(cat app/VERSION) at $CI_COMMIT_SHA"
+          sh app/build.sh
+
+      deploy_staging:
+        stage: staging
+        needs: [build]
+        timeout_seconds: 900
+        github_actions:
+          workflow: deploy.yml
+          inputs:
+            environment: staging
+
+      deploy_prod:
+        stage: production
+        needs: [deploy_staging]
+        timeout_seconds: 900
+        github_actions:
+          workflow: deploy.yml
+          inputs:
+            environment: production
