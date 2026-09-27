@@ -11,43 +11,52 @@
 # demo-* repos exercise engine features end-to-end on the production
 # instance without touching the pipemesh/pipemesh mainline.
 
-pipelines:
-  deployment:
-    stages: [build, staging, production]
+deployment:
+  stages: [build, staging, production]
 
-    jobs:
-      build:
-        stage: build
-        timeout_seconds: 900
-        trigger:
-          github_actions: build.yml
+  jobs:
+    build:
+      stage: build
+      timeout_seconds: 900
+      delegate:
+        type: github_actions
+        params:
+          workflow: build.yml
           artifacts: [dist]
 
-      # Hosted compute reading what Actions built: dist/ arrives at the
-      # workspace root through the ordinary inherited-artifact path.
-      verify:
-        stage: build
-        needs: [build]
-        script: |
-          echo "built version $(cat dist/version.txt) at $(cat dist/revision.txt)"
-          test "$(cat dist/revision.txt)" = "$CI_COMMIT_SHA"
-          test -x dist/deploy.sh || chmod +x dist/deploy.sh
-          echo "artifact from GitHub Actions verified"
+    # Hosted compute reading what Actions built: dist/ arrives at the
+    # workspace root through the ordinary inherited-artifact path.
+    verify:
+      stage: build
+      needs: [build]
+      script: |
+        echo "built version $(cat dist/version.txt) at $(cat dist/revision.txt)"
+        test "$(cat dist/revision.txt)" = "$CI_COMMIT_SHA"
+        test -x dist/deploy.sh || chmod +x dist/deploy.sh
+        echo "artifact from GitHub Actions verified"
 
-      deploy_staging:
-        stage: staging
-        needs: [verify]
-        timeout_seconds: 900
-        trigger:
-          github_actions: deploy.yml
+    deploy_staging:
+      stage: staging
+      needs: [verify]
+      timeout_seconds: 900
+      delegate:
+        type: github_actions
+        params:
+          workflow: deploy.yml
           inputs:
             environment: staging
 
-      deploy_prod:
-        stage: production
-        needs: [deploy_staging]
-        timeout_seconds: 900
-        trigger:
-          github_actions: deploy.yml
+    deploy_prod:
+      stage: production
+      needs: [deploy_staging]
+      timeout_seconds: 900
+      delegate:
+        type: github_actions
+        params:
+          workflow: deploy.yml
           inputs:
             environment: production
+
+pipemesh:
+  pipelines:
+    deployment: !ref deployment
