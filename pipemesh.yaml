@@ -18,17 +18,18 @@ deployment:
     build:
       stage: build
       timeout_seconds: 900
+      produces:
+        dist: file
       delegate:
         type: github_actions
         params:
           workflow: build.yml
-          artifacts: [dist]
 
-    # Hosted compute reading what Actions built: dist/ arrives at the
-    # workspace root through the ordinary inherited-artifact path.
+    # Hosted compute reading what Actions built: the dist entry — the
+    # Actions artifact of that name — unpacks at dist/.
     verify:
       stage: build
-      needs: [build]
+      consumes: [build/dist]
       script: |
         echo "built version $(cat dist/version.txt) at $(cat dist/revision.txt)"
         test "$(cat dist/revision.txt)" = "$CI_COMMIT_SHA"
