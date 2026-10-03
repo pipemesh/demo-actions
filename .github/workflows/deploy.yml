@@ -1,6 +1,6 @@
-# Dispatched by PipeMesh (DESIGN-V42). PipeMesh always sends pipemesh_sha
-# (the revision to deploy) and pipemesh_run (its job run id); the manifest
-# adds `environment`. The run name carries pipemesh_run so PipeMesh can
+# Dispatched by Pipemesh (DESIGN-V42). Pipemesh always sends pipemesh_sha
+# (the revision to deploy) and pipemesh_run (its job run id); the definition
+# adds `environment`. The run name carries pipemesh_run so Pipemesh can
 # match this run to its job without guessing.
 name: Deploy
 
@@ -8,11 +8,11 @@ on:
   workflow_dispatch:
     inputs:
       pipemesh_sha:
-        description: Revision to deploy (set by PipeMesh)
+        description: Revision to deploy (set by Pipemesh)
         type: string
         required: true
       pipemesh_run:
-        description: PipeMesh job run id (set by PipeMesh)
+        description: Pipemesh job run id (set by Pipemesh)
         type: string
         required: true
       environment:
