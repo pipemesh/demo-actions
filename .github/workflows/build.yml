@@ -1,5 +1,5 @@
-# Dispatched by PipeMesh (DESIGN-V42): the build runs on GitHub Actions
-# and hands its output back as a named artifact, which PipeMesh imports
+# Dispatched by Pipemesh (DESIGN-V42): the build runs on GitHub Actions
+# and hands its output back as a named artifact, which Pipemesh imports
 # so downstream jobs inherit it through needs:.
 name: Build
 
@@ -7,11 +7,11 @@ on:
   workflow_dispatch:
     inputs:
       pipemesh_sha:
-        description: Revision to build (set by PipeMesh)
+        description: Revision to build (set by Pipemesh)
         type: string
         required: true
       pipemesh_run:
-        description: PipeMesh job run id (set by PipeMesh)
+        description: Pipemesh job run id (set by Pipemesh)
         type: string
         required: true
 
