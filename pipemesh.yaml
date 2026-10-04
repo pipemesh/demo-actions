@@ -1,12 +1,12 @@
 # demo-actions — a dogfooding repo for DESIGN-V42 (2026-09-05): jobs whose
-# executor is a GitHub Actions workflow. The mainline is release-flow
-# shaped: `build` is a trigger whose target is the build.yml Actions
-# workflow (trigger: github_actions:) and whose `dist` artifact PipeMesh
-# imports; `verify` runs on PipeMesh's hosted compute
-# and reads that artifact (inherited through needs:); the two deploys
-# are runs of deploy.yml. Every workflow checks out the revision
-# PipeMesh hands it (pipemesh_sha) and names its run after pipemesh_run
-# so the runner can match it exactly.
+# executor is a GitHub Actions workflow (github_actions:). The mainline is
+# release-flow shaped: `build` is a build that runs the build.yml Actions
+# workflow and whose `dist` artifact Pipemesh imports; `verify` runs on
+# Pipemesh's hosted compute and reads that artifact (consumes:); the two
+# deploys are runs of deploy.yml. An Actions job's checkout is read from
+# its workflow file, so none of them says checkout:. Every workflow checks
+# out the revision Pipemesh hands it (pipemesh_sha) and names its run
+# after pipemesh_run so the runner can match it exactly.
 #
 # demo-* repos exercise engine features end-to-end on the production
 # instance without touching the pipemesh/pipemesh mainline.
@@ -16,20 +16,22 @@ deployment:
 
   jobs:
     build:
+      kind: build
       stage: build
       timeout_seconds: 900
       produces:
         dist: file
-      delegate:
-        type: github_actions
-        params:
-          workflow: build.yml
+      github_actions: build.yml
 
     # Hosted compute reading what Actions built: the dist entry — the
-    # Actions artifact of that name — unpacks at dist/.
+    # Actions artifact of that name — unpacks at dist/. It checks out
+    # nothing: the artifact is its only input, so a dist it already
+    # verified reuses that run.
     verify:
+      kind: build
       stage: build
       consumes: [build/dist]
+      checkout: false
       script: |
         echo "built version $(cat dist/version.txt) at $(cat dist/revision.txt)"
         test "$(cat dist/revision.txt)" = "$CI_COMMIT_SHA"
@@ -37,26 +39,24 @@ deployment:
         echo "artifact from GitHub Actions verified"
 
     deploy_staging:
+      kind: deploy
       stage: staging
       needs: [verify]
       timeout_seconds: 900
-      delegate:
-        type: github_actions
-        params:
-          workflow: deploy.yml
-          inputs:
-            environment: staging
+      github_actions:
+        workflow: deploy.yml
+        inputs:
+          environment: staging
 
     deploy_prod:
+      kind: deploy
       stage: production
       needs: [deploy_staging]
       timeout_seconds: 900
-      delegate:
-        type: github_actions
-        params:
-          workflow: deploy.yml
-          inputs:
-            environment: production
+      github_actions:
+        workflow: deploy.yml
+        inputs:
+          environment: production
 
 pipemesh:
   pipelines:
