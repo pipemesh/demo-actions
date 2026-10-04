@@ -45,6 +45,7 @@ deployment:
 
     deploy_staging:
       job_type: deploy
+      production: false
       stage: staging
       needs:
         - verify
@@ -56,6 +57,7 @@ deployment:
 
     deploy_prod:
       job_type: deploy
+      production: true
       stage: production
       needs:
         - deploy_staging
