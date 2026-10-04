@@ -12,11 +12,15 @@
 # instance without touching the pipemesh/pipemesh mainline.
 
 deployment:
-  stages: [build, staging, production]
+  type: pipeline
+  stages:
+    - build
+    - staging
+    - production
 
   jobs:
     build:
-      kind: build
+      job_type: build
       stage: build
       timeout_seconds: 900
       produces:
@@ -28,9 +32,10 @@ deployment:
     # nothing: the artifact is its only input, so a dist it already
     # verified reuses that run.
     verify:
-      kind: build
+      job_type: build
       stage: build
-      consumes: [build/dist]
+      consumes:
+        - build/dist
       checkout: false
       script: |
         echo "built version $(cat dist/version.txt) at $(cat dist/revision.txt)"
@@ -39,9 +44,10 @@ deployment:
         echo "artifact from GitHub Actions verified"
 
     deploy_staging:
-      kind: deploy
+      job_type: deploy
       stage: staging
-      needs: [verify]
+      needs:
+        - verify
       timeout_seconds: 900
       github_actions:
         workflow: deploy.yml
@@ -49,9 +55,10 @@ deployment:
           environment: staging
 
     deploy_prod:
-      kind: deploy
+      job_type: deploy
       stage: production
-      needs: [deploy_staging]
+      needs:
+        - deploy_staging
       timeout_seconds: 900
       github_actions:
         workflow: deploy.yml
