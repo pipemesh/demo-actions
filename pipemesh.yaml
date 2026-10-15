@@ -35,7 +35,7 @@ deployment:
       job_type: build
       stage: build
       consumes:
-        - build/dist
+        DIST: build/dist
       checkout: false
       script: |
         echo "built version $(cat dist/version.txt) at $(cat dist/revision.txt)"
