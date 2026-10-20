@@ -36,3 +36,24 @@ jobs:
           echo "version:     $(cat app/VERSION)"
       - name: Deploy
         run: sh app/deploy.sh "${{ inputs.environment }}"
+      # What this run deployed, as one Markdown file: Pipemesh shows it in
+      # the deploy job's Reports tab (reports: deploy-summary).
+      - name: Summarize
+        if: always()
+        run: |
+          {
+            echo "# ${{ job.status == 'success' && '✅' || '❌' }} ${{ inputs.environment }}: demo-actions $(cat app/VERSION)"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Environment | ${{ inputs.environment }} |"
+            echo "| Version | $(cat app/VERSION) |"
+            echo "| Revision | \`${{ inputs.pipemesh_sha }}\` |"
+            echo "| Outcome | ${{ job.status }} |"
+            echo "| Actions run | [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) |"
+          } > deploy-summary.md
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deploy-summary
+          path: deploy-summary.md

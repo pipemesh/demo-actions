@@ -1,6 +1,7 @@
 # Dispatched by Pipemesh (DESIGN-V42): the build runs on GitHub Actions
 # and hands its output back as a named artifact, which Pipemesh imports
-# so downstream jobs inherit it through needs:.
+# so downstream jobs inherit it through needs:, and its test results as
+# another, which Pipemesh shows as the job's report.
 name: Build
 
 on:
@@ -24,6 +25,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.pipemesh_sha }}
+      # The tests write their results as a small site; it is uploaded
+      # whether they pass or not, and Pipemesh shows it in the build job's
+      # Reports tab (reports: test-report in pipemesh.yaml).
+      - name: Test
+        run: sh app/test.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-report
+          path: test-report
       - name: Build
         run: |
           sh app/build.sh
