@@ -25,6 +25,12 @@ deployment:
       timeout_seconds: 900
       produces:
         dist: file
+      # An Actions job's report is the run's Actions artifact of the same
+      # name, imported whatever the run's conclusion: build.yml uploads the
+      # tests' HTML site as test-report.
+      reports:
+        test-report:
+          title: Tests
       github_actions: build.yml
 
     # Hosted compute reading what Actions built: the dist entry — the
@@ -54,6 +60,10 @@ deployment:
         workflow: deploy.yml
         inputs:
           environment: staging
+      # deploy.yml uploads what it deployed as deploy-summary.md.
+      reports:
+        deploy-summary:
+          title: Deploy summary
 
     deploy_prod:
       job_type: deploy
@@ -66,6 +76,10 @@ deployment:
         workflow: deploy.yml
         inputs:
           environment: production
+      # deploy.yml uploads what it deployed as deploy-summary.md.
+      reports:
+        deploy-summary:
+          title: Deploy summary
 
 pipemesh:
   pipelines:

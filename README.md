@@ -10,4 +10,10 @@ orchestrates the release — stages, promotion, supersede — and Actions
 provides the compute. Each Actions job's checkout is read from its
 workflow file (both check out the whole revision).
 
+**Reports from Actions:** a `github_actions:` job's `reports:` are the
+run's Actions artifacts of the same names, imported whatever the run's
+conclusion. The build uploads its tests' HTML site (`app/test.sh` →
+`test-report`), each deploy a Markdown summary of what it shipped
+(`deploy-summary`); both show in the job panel's Reports tab.
+
 Nothing here is real software: `app/` is a version file and two scripts.
