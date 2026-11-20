@@ -1,0 +1,46 @@
+# Dispatched by Pipemesh: builds an image on GitHub Actions and pushes it
+# into Pipemesh's own registry, at the place pipemesh/produce names for
+# the job's app_image key. Pipemesh records it by the run's tag when the
+# run succeeds (DESIGN-V142).
+name: Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      pipemesh_sha:
+        description: Revision to build (set by Pipemesh)
+        type: string
+        required: true
+      pipemesh_run:
+        description: Pipemesh job run id (set by Pipemesh)
+        type: string
+        required: true
+
+run-name: image · ${{ inputs.pipemesh_run }}
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  image:
+    # arm64, like Pipemesh's hosted runners that run in this image.
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.pipemesh_sha }}
+      - uses: pipemesh/consume@v1
+        with:
+          pipemesh-url: https://pipemesh.io
+          registry-login: true
+      - id: place
+        uses: pipemesh/produce@v1
+        with:
+          pipemesh-url: https://pipemesh.io
+          key: app_image
+          place: true
+      - name: Build and push
+        run: |
+          docker build --build-arg REVISION="${{ inputs.pipemesh_sha }}" -t "${{ steps.place.outputs.ref }}" image
+          docker push "${{ steps.place.outputs.ref }}"

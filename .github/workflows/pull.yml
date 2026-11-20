@@ -1,0 +1,36 @@
+# Dispatched by Pipemesh: pulls the image the image job pushed into
+# Pipemesh's registry, with the login pipemesh/consume gets for what this
+# job consumes (DESIGN-V142).
+name: Pull
+
+on:
+  workflow_dispatch:
+    inputs:
+      pipemesh_sha:
+        description: Revision (set by Pipemesh)
+        type: string
+        required: true
+      pipemesh_run:
+        description: Pipemesh job run id (set by Pipemesh)
+        type: string
+        required: true
+
+run-name: pull · ${{ inputs.pipemesh_run }}
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  pull:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: pipemesh/consume@v1
+        with:
+          pipemesh-url: https://pipemesh.io
+          registry-login: true
+      - name: Pull and run it
+        run: |
+          echo "consumed: $APP"
+          docker pull "$APP"
+          docker run --rm "$APP" cat /pipemesh-demo.txt

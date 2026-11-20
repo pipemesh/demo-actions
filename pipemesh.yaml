@@ -49,6 +49,34 @@ deployment:
         test -x dist/deploy.sh || chmod +x dist/deploy.sh
         echo "artifact from GitHub Actions verified"
 
+    # Pipemesh's registry from GitHub Actions (DESIGN-V142): image.yml
+    # pushes app_image to its place in Pipemesh's registry; run_image runs
+    # in it on Pipemesh's hosted compute (image_from:); pull_image pulls it
+    # back on Actions with the login pipemesh/consume gets.
+    image:
+      job_type: build
+      stage: build
+      timeout_seconds: 900
+      produces:
+        app_image: oci
+      github_actions: image.yml
+
+    run_image:
+      job_type: task
+      stage: build
+      image_from: image/app_image
+      checkout: false
+      script: |
+        cat /pipemesh-demo.txt
+
+    pull_image:
+      job_type: task
+      stage: build
+      timeout_seconds: 900
+      consumes:
+        APP: image/app_image
+      github_actions: pull.yml
+
     deploy_staging:
       job_type: deploy
       production: false
