@@ -51,7 +51,7 @@ deployment:
 
     # Pipemesh's registry from GitHub Actions (DESIGN-V142): image.yml
     # pushes app_image to its place in Pipemesh's registry; run_image runs
-    # in it on Pipemesh's hosted compute (image_from:); pull_image pulls it
+    # in it on Pipemesh's hosted compute (image: !env); pull_image pulls it
     # back on Actions with the login pipemesh/consume gets.
     image:
       job_type: build
@@ -64,7 +64,9 @@ deployment:
     run_image:
       job_type: task
       stage: build
-      image_from: image/app_image
+      consumes:
+        JOB_IMAGE: image/app_image
+      image: !env JOB_IMAGE
       checkout: false
       script: |
         cat /pipemesh-demo.txt
